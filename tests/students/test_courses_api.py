@@ -6,14 +6,12 @@ import pytest
 def test_retrieve_logic(api_client,course_factory):
     courses = course_factory(_quantity=10)
 
-    response = api_client.get('/api/v1/courses/')
+    response = api_client.get('/api/v1/courses/1/')
 
     data = response.json()
     
     assert response.status_code == 200 
-    for i, c in enumerate(data):
-        assert c['name'] == courses[i].name
-    
+    assert data['name'] == courses[0].name
 
 @pytest.mark.django_db
 def test_list_logic(api_client, course_factory):
@@ -30,7 +28,7 @@ def test_list_logic(api_client, course_factory):
 def test_filtering_id(api_client,course_factory):
     courses = course_factory(_quantity=10)
 
-    response = api_client.get(f'/api/v1/courses/?id={courses[2].id}')
+    response = api_client.get(f'/api/v1/courses/', {'id': f'{courses[2].id}'})
 
     data = response.json()
 
@@ -42,7 +40,7 @@ def test_filtering_id(api_client,course_factory):
 def test_filtering_name(api_client, course_factory):
     courses = course_factory(_quantity=10)
 
-    response = api_client.get(f'/api/v1/courses/?name={courses[2].name}')
+    response = api_client.get('/api/v1/courses/',{'name': f'{courses[2].name}'})
 
     data = response.json()
 
@@ -63,17 +61,17 @@ def test_create_course(api_client):
     )
 
     assert response.status_code == 201
+    assert response.data['name'] == 'test'
 
 @pytest.mark.django_db
 def test_update_course(api_client, course_factory):
-    courses = course_factory(_quantity=10)
+    courses = course_factory(_quantity=23)
 
-    response = api_client.patch(f'/api/v1/courses/{courses[2].id}/',
+    response = api_client.patch(f'/api/v1/courses/{courses[22].id}/',
                                 data={'name': 'test', 'students':[]})
-    new_courses = api_client.get(f'/api/v1/courses/{courses[2].id}/').json()
 
     assert response.status_code == 200
-    assert new_courses['name'] == 'test'
+    assert response.data['name'] == 'test'
 
 @pytest.mark.django_db
 def test_remove_course(api_client, course_factory):
@@ -84,3 +82,4 @@ def test_remove_course(api_client, course_factory):
 
     assert response.status_code == 204
     assert len(count_courses) == len(courses) - 1
+
